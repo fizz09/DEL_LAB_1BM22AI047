@@ -1,0 +1,82 @@
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
+import matplotlib.pyplot as plt
+
+# Step 1: Load and preprocess the MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# Flatten the images to 1D vectors (28x28 -> 784)
+x_train = x_train.reshape((x_train.shape[0], 784)).astype('float32')
+x_test = x_test.reshape((x_test.shape[0], 784)).astype('float32')
+
+# Normalize pixel values to be between 0 and 1
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
+# One-hot encode the labels (convert the labels to one-hot format)
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+# Step 2: Define the model function with or without Dropout
+def create_model(dropout_rate=None):
+    model = models.Sequential()
+    model.add(layers.Dense(128, activation='relu', input_dim=784))
+    
+    if dropout_rate:
+        model.add(layers.Dropout(dropout_rate))  # Add dropout layer if specified
+    
+    model.add(layers.Dense(64, activation='relu'))
+    
+    if dropout_rate:
+        model.add(layers.Dropout(dropout_rate))  # Add dropout layer if specified
+    
+    model.add(layers.Dense(10, activation='softmax'))
+    
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
+
+# Step 3: Train model with dropout (lower dropout rate)
+model_with_dropout = create_model(dropout_rate=0.3)  # Changed dropout rate to 0.3
+history_with_dropout = model_with_dropout.fit(x_train, y_train, epochs=15, batch_size=128, validation_split=0.2, verbose=0)
+
+# Step 4: Train model without dropout (baseline)
+model_without_dropout = create_model(dropout_rate=None)
+history_without_dropout = model_without_dropout.fit(x_train, y_train, epochs=15, batch_size=128, validation_split=0.2, verbose=0)
+
+# Step 5: Plot the accuracy comparison
+plt.figure(figsize=(12, 6))
+
+# Plot accuracy with dropout vs without dropout
+plt.subplot(1, 2, 1)
+plt.plot(history_with_dropout.history['accuracy'], label='Training accuracy (with dropout)')
+plt.plot(history_with_dropout.history['val_accuracy'], label='Validation accuracy (with dropout)')
+plt.plot(history_without_dropout.history['accuracy'], label='Training accuracy (no dropout)', linestyle='dashed')
+plt.plot(history_without_dropout.history['val_accuracy'], label='Validation accuracy (no dropout)', linestyle='dashed')
+plt.title('Training and Validation Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+# Plot loss comparison
+plt.subplot(1, 2, 2)
+plt.plot(history_with_dropout.history['loss'], label='Training loss (with dropout)')
+plt.plot(history_with_dropout.history['val_loss'], label='Validation loss (with dropout)')
+plt.plot(history_without_dropout.history['loss'], label='Training loss (no dropout)', linestyle='dashed')
+plt.plot(history_without_dropout.history['val_loss'], label='Validation loss (no dropout)', linestyle='dashed')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+# Display the plot
+plt.tight_layout()
+plt.show()
+
+# Step 6: Evaluate both models on the test set
+test_loss_with_dropout, test_acc_with_dropout = model_with_dropout.evaluate(x_test, y_test, verbose=2)
+test_loss_without_dropout, test_acc_without_dropout = model_without_dropout.evaluate(x_test, y_test, verbose=2)
+
+# Print the test accuracy
+print(f'Test accuracy with dropout: {test_acc_with_dropout}')
+print(f'Test accuracy without dropout: {test_acc_without_dropout}')

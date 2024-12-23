@@ -1,0 +1,30 @@
+import numpy as np
+import pandas as pd
+
+def perceptron(X, y, learning_rate=0.1, n_iterations=10):
+    n_samples, n_features = X.shape
+    weights = np.zeros(n_features)
+    bias = 0
+
+    for _ in range(n_iterations):
+        for idx, x_i in enumerate(X):
+            linear_output = np.dot(x_i, weights) + bias
+            y_predicted = 1 if linear_output >= 0 else 0
+            update = learning_rate * (y[idx] - y_predicted)
+            weights += update * x_i
+            bias += update
+    return weights, bias
+
+def predict(X, weights, bias):
+    linear_output = np.dot(X, weights) + bias
+    return np.where(linear_output >= 0, 1, 0)
+
+if __name__ == "__main__":
+    df = pd.read_csv('dataset.csv')
+    X = df[['Age', 'Commision (in value)', 'Duration', 'Net Sales']].to_numpy(dtype=np.float64)
+    y = df['Claim'].to_numpy(dtype=np.float64)  
+    print("First few rows of X:", X[:5])
+    print("First few entries of y:", y[:5])
+    weights, bias = perceptron(X, y, learning_rate=0.1, n_iterations=10)
+    predictions = predict(X, weights, bias)
+    print("Predictions:", predictions)

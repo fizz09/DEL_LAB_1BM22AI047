@@ -1,0 +1,47 @@
+#How does a feed forward neural network with multi layer perceptron architecture solve the XOR problem.
+
+import numpy as np
+# Sigmoid activation function and its derivative
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+def sigmoid_derivative(x):
+    return x * (1 - x)
+# XOR input and output
+X = np.array([[0, 0],
+              [0, 1],
+              [1, 0],
+              [1, 1]])
+y = np.array([[0], [1], [1], [0]])
+# Set a random seed for reproducibility
+np.random.seed(42)
+# Initialize weights
+input_layer_size = 2
+hidden_layer_size = 2
+output_layer_size = 1
+# Random weights initialization
+weights_input_hidden = np.random.uniform(-1, 1, (input_layer_size, hidden_layer_size))
+weights_hidden_output = np.random.uniform(-1, 1, (hidden_layer_size, output_layer_size))
+# Training parameters
+learning_rate = 0.1
+epochs = 10000
+# Training the MLP
+for epoch in range(epochs):
+    # Forward pass
+    hidden_layer_input = np.dot(X, weights_input_hidden)
+    hidden_layer_output = sigmoid(hidden_layer_input)
+    output_layer_input = np.dot(hidden_layer_output, weights_hidden_output)
+    predicted_output = sigmoid(output_layer_input)
+    # Backpropagation
+    error = y - predicted_output
+    d_predicted_output = error * sigmoid_derivative(predicted_output)
+    error_hidden_layer = d_predicted_output.dot(weights_hidden_output.T)
+    d_hidden_layer = error_hidden_layer * sigmoid_derivative(hidden_layer_output)
+    # Update weights
+    weights_hidden_output += hidden_layer_output.T.dot(d_predicted_output) * learning_rate
+    weights_input_hidden += X.T.dot(d_hidden_layer) * learning_rate
+# Predictions after training
+print("Final predictions:")
+for i in range(len(X)):
+    hidden_layer_output = sigmoid(np.dot(X[i], weights_input_hidden))
+    predicted_output = sigmoid(np.dot(hidden_layer_output, weights_hidden_output))
+    print(f"Input: {X[i]}, Prediction: {np.round(predicted_output[0])}")
